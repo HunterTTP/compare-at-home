@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ThreeSixty.js — 96f Sprite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap (optional, just for base styles) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- ThreeSixty.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@mladenilic/threesixty.js/dist/threesixty.js"></script>
+  <style>
+    /* Fixed dimensions must match each frame tile (600x600) */
+    #viewer { width: 600px; height: 600px; margin: 24px auto; }
+  </style>
+</head>
+<body class="bg-light">
+
+<div id="viewer" class="bg-white"></div>
+
+<script>
+  new ThreeSixty(document.getElementById('viewer'), {
+    image: './sprites/ring/ring.webp', // your 12x8 sprite sheet
+    width: 600,
+    height: 600,
+    count: 96,
+    perRow: 12,
+    draggable: true,
+    swipeable: true,
+    keys: true
+    // speed, inverted, etc. are optional; defaults are fine
+  });
+</script>
+
+</body>
+</html>
