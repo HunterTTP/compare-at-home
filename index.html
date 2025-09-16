@@ -11,7 +11,29 @@
   </style>
 </head>
 <body>
-<div class="container mt-3">
+
+<nav class="navbar border-bottom">
+  <div class="container-fluid">
+    <button class="btn btn-outline-secondary btn-sm" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#mainMenu" aria-controls="mainMenu"
+            aria-label="Open menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </div>
+</nav>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mainMenu" aria-labelledby="mainMenuLabel">
+  <div class="offcanvas-header">
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <nav class="nav flex-column">
+      <a class="nav-link text-primary" href="compare.html">Compare Tool</a>
+    </nav>
+  </div>
+</div>
+
+<div class="container-fluid mt-3">
   <div class="row g-4">
     <div class="col-12 col-md-6">
       <div id="panelA" class="viewer-panel card p-3">
@@ -32,19 +54,28 @@
   </div>
 
   <div class="range-wrap">
-    <input id="syncRange" type="range" class="form-range " min="1" max="240" step="1" value="1" aria-label="Rotate both viewers">
+    <input id="syncRange" type="range" class="form-range" min="1" max="240" step="1" value="1" aria-label="Rotate both viewers">
   </div>
 </div>
 
 <script src="https://scripts.sirv.com/sirvjs/v3/sirv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const CONFIG = {
-    objects: [{
-      name: "iPhone 17 Pro Max",
-      slug: "iphone-17-pro-max",
-      url: "https://hunterttp.sirv.com/phones/iphone-17-pro-max/iphone-17-pro-max.spin",
-      reverse: false
-    }]
+    objects: [
+      {
+        name: "iPhone 17 Pro Max",
+        slug: "iphone-17-pro-max",
+        url: "https://hunterttp.sirv.com/phones/iphone-17-pro-max/iphone-17-pro-max.spin",
+        reverse: false
+      },
+      {
+        name: "Samsung Galaxy S25 Ultra",
+        slug: "samsung-galaxy-s25-ultra",
+        url: "https://hunterttp.sirv.com/phones/samsung-galaxy-s25-ultra/samsung-galaxy-s25-ultra.spin",
+        reverse: false
+      }
+    ]
   }
 
   function renderViewer(elId, obj) {
@@ -52,33 +83,34 @@
     document.getElementById(elId).innerHTML =
       `<div class="Sirv" id="${elId}__sirv"><div data-src="${obj.url}"${opts}></div></div>`
     Sirv.start(`#${elId}__sirv`)
+    Sirv.refresh(`#${elId}__sirv`)
   }
 
   function setupPanel(rootId, initialIndex = 0) {
     const root = document.getElementById(rootId)
     const selectEl = root.querySelector('.objectSelect')
+    const viewerId = root.querySelector('.viewer').id
     selectEl.innerHTML = CONFIG.objects.map((o,i)=>`<option value="${i}">${o.name}</option>`).join('')
     selectEl.value = initialIndex
-    renderViewer(root.querySelector('.viewer').id, CONFIG.objects[initialIndex])
+    renderViewer(viewerId, CONFIG.objects[initialIndex])
+    selectEl.addEventListener('change', () => {
+      renderViewer(viewerId, CONFIG.objects[selectEl.value])
+    })
   }
 
   setupPanel('panelA', 0)
-  setupPanel('panelB', 0)
+  setupPanel('panelB', 1)
 
   let spinA = null, spinB = null
 
-  Sirv.on('spin:ready', () => {
-    const vA = Sirv.viewer.getInstance('#viewerA__sirv')
-    const vB = Sirv.viewer.getInstance('#viewerB__sirv')
-    if (vA?.child(0)?.spin?.isReady()) spinA = vA.child(0).spin
-    if (vB?.child(0)?.spin?.isReady()) spinB = vB.child(0).spin
+  Sirv.on('spin:ready', (spin) => {
+    const viewer = spin.parent().parent()
+    if (viewer?.id === 'viewerA__sirv') spinA = spin
+    if (viewer?.id === 'viewerB__sirv') spinB = spin
   })
 
   const slider = document.getElementById('syncRange')
-
-  function sliderValueToCol(val, maxCols) {
-    return (maxCols - (val - 1))
-  }
+  function sliderValueToCol(val, maxCols) { return (maxCols - (val - 1)) }
 
   slider.addEventListener('input', e => {
     const maxCols = parseInt(slider.max, 10) || 240
