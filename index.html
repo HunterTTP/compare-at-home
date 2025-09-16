@@ -6,19 +6,21 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@mladenilic/threesixty.js/dist/threesixty.js"></script>
   <style>
-    #viewer { width: 600px; height: 600px; margin: 24px auto; }
-    .toolbar { display: flex; justify-content: center; margin-top: 12px; }
-    .controls { max-width: 720px; margin: 0 auto; }
+    /* One narrow, centered column per panel so all elements share the same width */
+    .viewer-panel .panel-inner { width: min(420px, 100%); margin: 0 auto; }
+    /* Viewer fills the inner column; JS sets canvas size based on this width */
+    .viewer { width: 100%; aspect-ratio: 1 / 1; margin: 12px auto; }
+    .toolbar { display: flex; justify-content: center; margin-top: 8px; width: 100%; }
   </style>
 </head>
 <body>
 
 <nav class="navbar border-bottom">
   <div class="container-fluid">
-    <button class="btn btn-outline-light btn-sm" type="button"
+    <button class="btn btn-outline-secondary btn-sm" type="button"
             data-bs-toggle="offcanvas" data-bs-target="#mainMenu" aria-controls="mainMenu"
             aria-label="Open menu">
-      <span class="navbar-toggler-icon"></span>
+      <span class="navbar-toggler-icon"></span> Menu
     </button>
   </div>
 </nav>
@@ -35,63 +37,66 @@
   </div>
 </div>
 
-<div class="controls container mt-3">
-  <div class="row g-2 align-items-center">
-    <div class="col">
-      <select id="objectSelect" class="form-select"></select>
+<div class="container mt-3">
+  <div class="row g-4">
+    <!-- Panel A -->
+    <div class="col-12 col-md-6">
+      <div id="panelA" class="viewer-panel card p-3">
+        <div class="panel-inner">
+          <select class="form-select objectSelect mb-2" aria-label="Select object (left)"></select>
+          <div class="viewer rounded-3"></div>
+          <div class="toolbar">
+            <div class="btn-group btn-group-sm" role="group" aria-label="View controls left">
+              <button class="btn btn-outline-secondary" data-view="front">Front</button>
+              <button class="btn btn-outline-secondary" data-view="back">Back</button>
+              <button class="btn btn-outline-secondary" data-view="left">Left</button>
+              <button class="btn btn-outline-secondary" data-view="right">Right</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<div id="viewer" class="rounded-3"></div>
-
-<div class="toolbar">
-  <div class="btn-group btn-group-sm" role="group" aria-label="View controls">
-    <button class="btn btn-outline-secondary" data-view="front">Front</button>
-    <button class="btn btn-outline-secondary" data-view="back">Back</button>
-    <button class="btn btn-outline-secondary" data-view="left">Left</button>
-    <button class="btn btn-outline-secondary" data-view="right">Right</button>
+    <!-- Panel B -->
+    <div class="col-12 col-md-6">
+      <div id="panelB" class="viewer-panel card p-3">
+        <div class="panel-inner">
+          <select class="form-select objectSelect mb-2" aria-label="Select object (right)"></select>
+          <div class="viewer rounded-3"></div>
+          <div class="toolbar">
+            <div class="btn-group btn-group-sm" role="group" aria-label="View controls right">
+              <button class="btn btn-outline-secondary" data-view="front">Front</button>
+              <button class="btn btn-outline-secondary" data-view="back">Back</button>
+              <button class="btn btn-outline-secondary" data-view="left">Left</button>
+              <button class="btn btn-outline-secondary" data-view="right">Right</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
   const CONFIG = {
     objects: [
-      {
-        name: "iPhone 16 Pro",
-        image: "./sprites/iphone/sprite.webp",
-        views: { front: 0, back: 48, left: 24, right: 72 },
-        inverted: true
-      },
-      {
-        name: "Samsung Galaxy 25 Ultra",
-        image: "./sprites/android/sprite.webp",
-        views: { front: 0, back: 48, left: 22, right: 70 },
-        inverted: true
-      }
+      { name: "iPhone 16 Pro", image: "./sprites/iphone/sprite.webp",
+        views: { front: 0, back: 48, left: 24, right: 72 }, inverted: true },
+      { name: "Samsung Galaxy 25 Ultra", image: "./sprites/android/sprite.webp",
+        views: { front: 0, back: 48, left: 22, right: 70 }, inverted: true }
     ]
   }
 
   const COUNT = 96, PERROW = 12
-  const viewer = document.getElementById('viewer')
-  const objectSelect = document.getElementById('objectSelect')
 
-  CONFIG.objects.forEach((o, i) => {
-    const opt = document.createElement('option')
-    opt.value = i
-    opt.textContent = o.name
-    objectSelect.appendChild(opt)
-  })
-
-  let current = CONFIG.objects[0]
-  let ts = initThreeSixty(current)
-
-  function initThreeSixty(obj) {
-    viewer.innerHTML = ""
-    const instance = new ThreeSixty(viewer, {
+  function initThreeSixty(container, obj) {
+    // Use the container's actual width so canvas matches dropdown/buttons width
+    const size = Math.max(200, Math.round(container.clientWidth || 400))
+    container.innerHTML = ""
+    const inst = new ThreeSixty(container, {
       image: obj.image,
-      width: 400,
-      height: 400,
+      width: size,
+      height: size,
       count: COUNT,
       perRow: PERROW,
       draggable: true,
@@ -102,24 +107,35 @@
       swipeTolerance: 3,
       inverted: !!obj.inverted
     })
-    instance.goto(obj.views.front)
-    instance.play(true, 1)
-    return instance
+    inst.goto(obj.views.front)
+    inst.play(true, 1)
+    return inst
   }
 
-  objectSelect.addEventListener('change', () => {
-    current = CONFIG.objects[objectSelect.value | 0]
-    ts.stop()
-    ts = initThreeSixty(current)
-  })
+  function setupPanel(root, initialIndex = 0) {
+    const viewerEl = root.querySelector('.viewer')
+    const selectEl = root.querySelector('.objectSelect')
+    selectEl.innerHTML = CONFIG.objects.map((o, i) =>
+      `<option value="${i}">${o.name}</option>`).join('')
+    selectEl.value = initialIndex
 
-  document.querySelector('.btn-group').addEventListener('click', e => {
-    const v = e.target.dataset.view
-    if (!v) return
-    ts.stop()
-    const idx = current.views[v]
-    if (Number.isInteger(idx)) ts.goto(idx)
-  })
+    let current = CONFIG.objects[initialIndex]
+    let ts = initThreeSixty(viewerEl, current)
+
+    selectEl.addEventListener('change', () => {
+      current = CONFIG.objects[selectEl.value | 0]
+      ts.stop(); ts = initThreeSixty(viewerEl, current)
+    })
+
+    root.querySelector('.btn-group').addEventListener('click', e => {
+      const v = e.target?.dataset?.view; if (!v) return
+      ts.stop(); const idx = current.views[v]
+      if (Number.isInteger(idx)) ts.goto(idx)
+    })
+  }
+
+  setupPanel(document.getElementById('panelA'), 0)
+  setupPanel(document.getElementById('panelB'), 1)
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
