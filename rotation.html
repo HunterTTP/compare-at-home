@@ -4,31 +4,93 @@
   <meta charset="utf-8" />
   <title>ThreeSixty.js — 96f Sprite</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Bootstrap (optional, just for base styles) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- ThreeSixty.js -->
   <script src="https://cdn.jsdelivr.net/npm/@mladenilic/threesixty.js/dist/threesixty.js"></script>
   <style>
-    /* Fixed dimensions must match each frame tile (600x600) */
     #viewer { width: 600px; height: 600px; margin: 24px auto; }
+    .toolbar { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
+    #frameValue { text-align: center; margin-top: 8px; font-size: 14px; }
+    .controls { max-width: 720px; margin: 0 auto; }
   </style>
 </head>
 <body class="bg-light">
 
+<div class="controls container mt-3">
+  <div class="row g-2 align-items-center">
+    <div class="col-auto"><label for="objectSelect" class="col-form-label">Object</label></div>
+    <div class="col">
+      <select id="objectSelect" class="form-select"></select>
+    </div>
+  </div>
+</div>
+
 <div id="viewer" class="bg-white"></div>
 
+<div class="toolbar">
+  <button class="btn btn-outline-primary" data-view="front">Front</button>
+  <button class="btn btn-outline-primary" data-view="right">Right</button>
+  <button class="btn btn-outline-primary" data-view="back">Back</button>
+  <button class="btn btn-outline-primary" data-view="left">Left</button>
+</div>
+
+<div class="container mt-3 controls">
+  <input type="range" class="form-range" id="frameRange" min="0" max="95" value="0">
+  <div id="frameValue">Frame: 0</div>
+</div>
+
 <script>
-  new ThreeSixty(document.getElementById('viewer'), {
-    image: './sprites/ring/ring.webp', // your 12x8 sprite sheet
-    width: 600,
-    height: 600,
-    count: 96,
-    perRow: 12,
-    draggable: true,
-    swipeable: true,
-    keys: true
-    // speed, inverted, etc. are optional; defaults are fine
-  });
+  const CONFIG = {
+    objects: [
+      {
+        name: "test-ring-1",
+        views: { front: 13, left: 37, back: 60, right: 85 }
+      }
+    ]
+  }
+
+  const COUNT = 96, PERROW = 12
+  const ts = new ThreeSixty(document.getElementById('viewer'), {
+    image: './sprites/ring/ring.webp',
+    width: 400, height: 400, count: COUNT, perRow: PERROW,
+    draggable: true, swipeable: true, keys: true
+  })
+
+  const objectSelect = document.getElementById('objectSelect')
+  CONFIG.objects.forEach((o, i) => {
+    const opt = document.createElement('option')
+    opt.value = i
+    opt.textContent = o.name
+    objectSelect.appendChild(opt)
+  })
+
+  let current = CONFIG.objects[0]
+  const frameRange = document.getElementById('frameRange')
+  const frameValue = document.getElementById('frameValue')
+
+  function setFrame(f){
+    ts.goto(f)
+    frameRange.value = f
+    frameValue.textContent = `Frame: ${f}`
+  }
+
+  setFrame(current.views.front)
+
+  objectSelect.addEventListener('change', () => {
+    current = CONFIG.objects[objectSelect.value|0]
+    setFrame(current.views.front)
+  })
+
+  document.querySelector('.toolbar').addEventListener('click', e => {
+    const v = e.target.dataset.view
+    if(!v) return
+    const idx = current.views[v]
+    if(Number.isInteger(idx)) setFrame(idx)
+  })
+
+  frameRange.addEventListener('input', e => {
+    const f = +e.target.value
+    setFrame(f)
+  })
 </script>
 
 </body>
