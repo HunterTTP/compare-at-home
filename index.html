@@ -32,13 +32,11 @@
     </nav>
 
     <div class="m-3">
-      <!-- global outer margin -->
-
       <!-- Viewers -->
       <div class="container-fluid py-3">
         <div class="row g-4">
           <!-- Left -->
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-6 text-center">
             <div class="ratio ratio-16x9" style="min-height: 80vh">
               <iframe
                 id="viewerLeft"
@@ -46,13 +44,21 @@
                 frameborder="0"
                 allowfullscreen
                 allow="autoplay; fullscreen; xr-spatial-tracking"
+              ></iframe>
+            </div>
+            <div class="mt-2">
+              <a
+                id="priceLeft"
+                class="btn btn-success btn-sm"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Check Prices</a
               >
-              </iframe>
             </div>
           </div>
 
           <!-- Right -->
-          <div class="col-12 col-md-6">
+          <div class="col-12 col-md-6 text-center">
             <div class="ratio ratio-16x9" style="min-height: 80vh">
               <iframe
                 id="viewerRight"
@@ -60,8 +66,16 @@
                 frameborder="0"
                 allowfullscreen
                 allow="autoplay; fullscreen; xr-spatial-tracking"
+              ></iframe>
+            </div>
+            <div class="mt-2">
+              <a
+                id="priceRight"
+                class="btn btn-success btn-sm"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Check Prices</a
               >
-              </iframe>
             </div>
           </div>
         </div>
@@ -83,14 +97,14 @@
         </div>
       </div>
     </div>
-    <!-- /global margin -->
 
     <script>
-      // --- Catalog (plug in more devices here) ---
+      // --- Catalog (add/replace devices here; each has a direct URL) ---
       const DEVICES = {
         iphone13promax: {
           name: "iPhone 13 Pro Max",
           model: "4328dea00e47497dbeac73c556121bc9",
+          priceUrl: "https://www.amazon.com/s?k=iPhone+13+Pro+Max",
           specs: {
             Display: "6.7″ Super Retina XDR OLED, ProMotion 120 Hz",
             Resolution: "2778 × 1284 (458 ppi)",
@@ -111,6 +125,7 @@
         iphone12pro: {
           name: "iPhone 12 Pro",
           model: "05dfc991665e45c68c8b7062136c0c6e",
+          priceUrl: "https://www.amazon.com/s?k=iPhone+12+Pro",
           specs: {
             Display: "6.1″ Super Retina XDR OLED",
             Resolution: "2532 × 1170 (460 ppi)",
@@ -131,6 +146,7 @@
         galaxys21fe: {
           name: "Samsung Galaxy S21 FE",
           model: "b341b95077554cac86419366dfe61e24",
+          priceUrl: "https://www.amazon.com/s?k=Samsung+Galaxy+S21+FE",
           specs: {
             Display: "6.4″ Dynamic AMOLED 2X, 120 Hz",
             Resolution: "2340 × 1080 (FHD+)",
@@ -169,9 +185,9 @@
       const rightSel = document.getElementById("selectRight");
       const ifrLeft = document.getElementById("viewerLeft");
       const ifrRight = document.getElementById("viewerRight");
-      const thLeft = document.getElementById("thLeft");
-      const thRight = document.getElementById("thRight");
       const tbody = document.getElementById("specsBody");
+      const priceLeft = document.getElementById("priceLeft");
+      const priceRight = document.getElementById("priceRight");
 
       function populateSelects() {
         const opts = Object.entries(DEVICES)
@@ -183,7 +199,6 @@
         rightSel.value = "iphone12pro";
       }
 
-      // Update one viewer iframe (slow spin, no intro)
       function updateViewer(iframe, deviceKey) {
         const d = DEVICES[deviceKey];
         const base = `https://sketchfab.com/models/${d.model}/embed`;
@@ -194,31 +209,38 @@
           ui_hint: "0",
           ui_animations: "0",
           autospin: "0.15",
-          ui_infos: "0", // hide title/info
-          ui_stop: "0", // hide stop button
-          scrollwheel: "0", // disable zoom
+          ui_infos: "0",
+          ui_stop: "0",
+          scrollwheel: "0",
         });
         iframe.src = `${base}?${params.toString()}`;
         iframe.title = d.name;
       }
 
+      function updatePriceLink(anchor, deviceKey) {
+        const url = DEVICES[deviceKey]?.priceUrl || "#";
+        anchor.href = url;
+        anchor.classList.toggle("disabled", url === "#");
+      }
+
       function renderTable(leftKey, rightKey) {
         const L = DEVICES[leftKey],
           R = DEVICES[rightKey];
-        const rows = SPEC_ORDER.map((label) => {
+        tbody.innerHTML = SPEC_ORDER.map((label) => {
           const lv = (L.specs && L.specs[label]) || "—";
           const rv = (R.specs && R.specs[label]) || "—";
           return `<tr><th scope="row">${label}</th><td>${lv}</td><td>${rv}</td></tr>`;
         }).join("");
-        tbody.innerHTML = rows;
       }
 
       leftSel.addEventListener("change", () => {
         updateViewer(ifrLeft, leftSel.value);
+        updatePriceLink(priceLeft, leftSel.value);
         renderTable(leftSel.value, rightSel.value);
       });
       rightSel.addEventListener("change", () => {
         updateViewer(ifrRight, rightSel.value);
+        updatePriceLink(priceRight, rightSel.value);
         renderTable(leftSel.value, rightSel.value);
       });
 
@@ -226,6 +248,8 @@
       populateSelects();
       updateViewer(ifrLeft, leftSel.value);
       updateViewer(ifrRight, rightSel.value);
+      updatePriceLink(priceLeft, leftSel.value);
+      updatePriceLink(priceRight, rightSel.value);
       renderTable(leftSel.value, rightSel.value);
     </script>
 
