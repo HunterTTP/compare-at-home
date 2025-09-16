@@ -6,11 +6,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@mladenilic/threesixty.js/dist/threesixty.js"></script>
   <style>
-    /* One narrow, centered column per panel so all elements share the same width */
     .viewer-panel .panel-inner { width: min(420px, 100%); margin: 0 auto; }
-    /* Viewer fills the inner column; JS sets canvas size based on this width */
     .viewer { width: 100%; aspect-ratio: 1 / 1; margin: 12px auto; }
-    .toolbar { display: flex; justify-content: center; margin-top: 8px; width: 100%; }
+    .shared-toolbar { display: flex; justify-content: center; margin-top: 16px; }
   </style>
 </head>
 <body>
@@ -20,14 +18,13 @@
     <button class="btn btn-outline-secondary btn-sm" type="button"
             data-bs-toggle="offcanvas" data-bs-target="#mainMenu" aria-controls="mainMenu"
             aria-label="Open menu">
-      <span class="navbar-toggler-icon"></span> Menu
+      <span class="navbar-toggler-icon"></span>
     </button>
   </div>
 </nav>
 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mainMenu" aria-labelledby="mainMenuLabel">
   <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="mainMenuLabel">Menu</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body">
@@ -45,14 +42,6 @@
         <div class="panel-inner">
           <select class="form-select objectSelect mb-2" aria-label="Select object (left)"></select>
           <div class="viewer rounded-3"></div>
-          <div class="toolbar">
-            <div class="btn-group btn-group-sm" role="group" aria-label="View controls left">
-              <button class="btn btn-outline-secondary" data-view="front">Front</button>
-              <button class="btn btn-outline-secondary" data-view="back">Back</button>
-              <button class="btn btn-outline-secondary" data-view="left">Left</button>
-              <button class="btn btn-outline-secondary" data-view="right">Right</button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -63,16 +52,18 @@
         <div class="panel-inner">
           <select class="form-select objectSelect mb-2" aria-label="Select object (right)"></select>
           <div class="viewer rounded-3"></div>
-          <div class="toolbar">
-            <div class="btn-group btn-group-sm" role="group" aria-label="View controls right">
-              <button class="btn btn-outline-secondary" data-view="front">Front</button>
-              <button class="btn btn-outline-secondary" data-view="back">Back</button>
-              <button class="btn btn-outline-secondary" data-view="left">Left</button>
-              <button class="btn btn-outline-secondary" data-view="right">Right</button>
-            </div>
-          </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Shared toolbar -->
+  <div class="shared-toolbar">
+    <div class="btn-group btn-group-sm" role="group" aria-label="View controls both">
+      <button class="btn btn-outline-secondary" data-view="front">Front</button>
+      <button class="btn btn-outline-secondary" data-view="back">Back</button>
+      <button class="btn btn-outline-secondary" data-view="left">Left</button>
+      <button class="btn btn-outline-secondary" data-view="right">Right</button>
     </div>
   </div>
 </div>
@@ -90,21 +81,14 @@
   const COUNT = 96, PERROW = 12
 
   function initThreeSixty(container, obj) {
-    // Use the container's actual width so canvas matches dropdown/buttons width
     const size = Math.max(200, Math.round(container.clientWidth || 400))
     container.innerHTML = ""
     const inst = new ThreeSixty(container, {
       image: obj.image,
-      width: size,
-      height: size,
-      count: COUNT,
-      perRow: PERROW,
-      draggable: true,
-      swipeable: true,
-      keys: true,
-      speed: 50,
-      dragTolerance: 3,
-      swipeTolerance: 3,
+      width: size, height: size,
+      count: COUNT, perRow: PERROW,
+      draggable: true, swipeable: true, keys: true, speed: 50,
+      dragTolerance: 3, swipeTolerance: 3,
       inverted: !!obj.inverted
     })
     inst.goto(obj.views.front)
@@ -127,15 +111,22 @@
       ts.stop(); ts = initThreeSixty(viewerEl, current)
     })
 
-    root.querySelector('.btn-group').addEventListener('click', e => {
-      const v = e.target?.dataset?.view; if (!v) return
-      ts.stop(); const idx = current.views[v]
-      if (Number.isInteger(idx)) ts.goto(idx)
-    })
+    return { get current(){return current}, set current(v){current=v}, get ts(){return ts}, set ts(v){ts=v}, viewerEl }
   }
 
-  setupPanel(document.getElementById('panelA'), 0)
-  setupPanel(document.getElementById('panelB'), 1)
+  // Init both panels
+  const panelA = setupPanel(document.getElementById('panelA'), 0)
+  const panelB = setupPanel(document.getElementById('panelB'), 1)
+
+  // Shared controls
+  document.querySelector('.shared-toolbar .btn-group').addEventListener('click', e => {
+    const v = e.target.dataset.view; if (!v) return
+    ;[panelA, panelB].forEach(panel => {
+      panel.ts.stop()
+      const idx = panel.current.views[v]
+      if (Number.isInteger(idx)) panel.ts.goto(idx)
+    })
+  })
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
