@@ -8,8 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@mladenilic/threesixty.js/dist/threesixty.js"></script>
   <style>
     #viewer { width: 600px; height: 600px; margin: 24px auto; }
-    .toolbar { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
-    #frameValue { text-align: center; margin-top: 8px; font-size: 14px; }
+    .toolbar { display: flex; justify-content: center; margin-top: 12px; }
     .controls { max-width: 720px; margin: 0 auto; }
   </style>
 </head>
@@ -24,18 +23,15 @@
   </div>
 </div>
 
-<div id="viewer" class="bg-white"></div>
+<div id="viewer" class="bg-white rounded-3"></div>
 
 <div class="toolbar">
-  <button class="btn btn-outline-primary" data-view="front">Front</button>
-  <button class="btn btn-outline-primary" data-view="right">Right</button>
-  <button class="btn btn-outline-primary" data-view="back">Back</button>
-  <button class="btn btn-outline-primary" data-view="left">Left</button>
-</div>
-
-<div class="container mt-3 controls">
-  <input type="range" class="form-range" id="frameRange" min="0" max="95" value="0">
-  <div id="frameValue">Frame: 0</div>
+  <div class="btn-group btn-group-sm" role="group" aria-label="View controls">
+    <button class="btn btn-outline-secondary" data-view="front">Front</button>
+    <button class="btn btn-outline-secondary" data-view="right">Right</button>
+    <button class="btn btn-outline-secondary" data-view="back">Back</button>
+    <button class="btn btn-outline-secondary" data-view="left">Left</button>
+  </div>
 </div>
 
 <script>
@@ -51,8 +47,10 @@
   const COUNT = 96, PERROW = 12
   const ts = new ThreeSixty(document.getElementById('viewer'), {
     image: './sprites/ring/ring.webp',
-    width: 400, height: 400, count: COUNT, perRow: PERROW,
-    draggable: true, swipeable: true, keys: true
+    width: 400, height: 400,
+    count: COUNT, perRow: PERROW,
+    draggable: true, swipeable: true, keys: true,
+    speed: 50
   })
 
   const objectSelect = document.getElementById('objectSelect')
@@ -64,33 +62,26 @@
   })
 
   let current = CONFIG.objects[0]
-  const frameRange = document.getElementById('frameRange')
-  const frameValue = document.getElementById('frameValue')
 
-  function setFrame(f){
-    ts.goto(f)
-    frameRange.value = f
-    frameValue.textContent = `Frame: ${f}`
-  }
+  function setFrame(f){ ts.goto(f) }
 
   setFrame(current.views.front)
 
   objectSelect.addEventListener('change', () => {
     current = CONFIG.objects[objectSelect.value|0]
+    ts.stop()
     setFrame(current.views.front)
   })
 
-  document.querySelector('.toolbar').addEventListener('click', e => {
+  document.querySelector('.btn-group').addEventListener('click', e => {
     const v = e.target.dataset.view
     if(!v) return
+    ts.stop()
     const idx = current.views[v]
     if(Number.isInteger(idx)) setFrame(idx)
   })
 
-  frameRange.addEventListener('input', e => {
-    const f = +e.target.value
-    setFrame(f)
-  })
+  ts.play(true, 2)
 </script>
 
 </body>
