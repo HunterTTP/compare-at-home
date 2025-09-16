@@ -11,11 +11,11 @@
     .controls { max-width: 720px; margin: 0 auto; }
   </style>
 </head>
-<body class="bg-light">
+<body>
 
-<nav class="navbar bg-white border-bottom">
+<nav class="navbar border-bottom">
   <div class="container-fluid">
-    <button class="btn btn-outline-secondary btn-sm" type="button"
+    <button class="btn btn-outline-light btn-sm" type="button"
             data-bs-toggle="offcanvas" data-bs-target="#mainMenu" aria-controls="mainMenu"
             aria-label="Open menu">
       <span class="navbar-toggler-icon"></span>
@@ -35,10 +35,8 @@
   </div>
 </div>
 
-
 <div class="controls container mt-3">
   <div class="row g-2 align-items-center">
-    <div class="col-auto"><label for="objectSelect" class="col-form-label">Object</label></div>
     <div class="col">
       <select id="objectSelect" class="form-select"></select>
     </div>
@@ -60,16 +58,16 @@
   const CONFIG = {
     objects: [
       {
-        name: "iphone",
+        name: "iPhone 16 Pro",
         image: "./sprites/iphone/sprite.webp",
         views: { front: 0, back: 48, left: 24, right: 72 },
         inverted: true
       },
       {
-        name: "ring",
-        image: "./sprites/ring/ring.webp",
-        views: { front: 13, back: 60, left: 37, right: 85 },
-        inverted: false
+        name: "Samsung Galaxy 25 Ultra",
+        image: "./sprites/android/sprite.webp",
+        views: { front: 0, back: 48, left: 22, right: 70 },
+        inverted: true
       }
     ]
   }
@@ -100,10 +98,12 @@
       swipeable: true,
       keys: true,
       speed: 50,
+      dragTolerance: 3,
+      swipeTolerance: 3,
       inverted: !!obj.inverted
     })
     instance.goto(obj.views.front)
-    instance.play(true, 2)
+    instance.play(true, 1)
     return instance
   }
 
