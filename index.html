@@ -7,7 +7,6 @@
   <style>
     .viewer-panel .panel-inner { width: min(420px, 100%); margin: 0 auto; }
     .viewer { width: 100%; aspect-ratio: 1 / 1; margin: 12px auto; }
-    .shared-toolbar { display: flex; justify-content: center; margin: 16px 0; }
     .range-wrap { max-width: 720px; margin: 16px auto; }
   </style>
 </head>
@@ -33,16 +32,7 @@
   </div>
 
   <div class="range-wrap">
-    <input id="syncRange" type="range" class="form-range" min="1" max="240" step="1" value="1" aria-label="Rotate both viewers">
-  </div>
-
-  <div class="shared-toolbar">
-    <div class="btn-group btn-group-sm" role="group" aria-label="View controls both">
-      <button class="btn btn-outline-secondary" data-view="front">Front</button>
-      <button class="btn btn-outline-secondary" data-view="back">Back</button>
-      <button class="btn btn-outline-secondary" data-view="left">Left</button>
-      <button class="btn btn-outline-secondary" data-view="right">Right</button>
-    </div>
+    <input id="syncRange" type="range" class="form-range " min="1" max="240" step="1" value="1" aria-label="Rotate both viewers">
   </div>
 </div>
 
@@ -53,7 +43,7 @@
       name: "iPhone 17 Pro Max",
       slug: "iphone-17-pro-max",
       url: "https://hunterttp.sirv.com/phones/iphone-17-pro-max/iphone-17-pro-max.spin",
-      reverse: true
+      reverse: false
     }]
   }
 
@@ -85,8 +75,14 @@
   })
 
   const slider = document.getElementById('syncRange')
+
+  function sliderValueToCol(val, maxCols) {
+    return (maxCols - (val - 1))
+  }
+
   slider.addEventListener('input', e => {
-    const col = e.target.value|0   // 1..240
+    const maxCols = parseInt(slider.max, 10) || 240
+    const col = sliderValueToCol(parseInt(e.target.value, 10), maxCols)
     if (spinA?.isReady()) spinA.jumpCols(col)
     if (spinB?.isReady()) spinB.jumpCols(col)
   })
