@@ -12,58 +12,28 @@
   </style>
 </head>
 <body>
-
-<nav class="navbar border-bottom">
-  <div class="container-fluid">
-    <button class="btn btn-outline-secondary btn-sm" type="button"
-            data-bs-toggle="offcanvas" data-bs-target="#mainMenu" aria-controls="mainMenu"
-            aria-label="Open menu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-  </div>
-</nav>
-
-<div class="offcanvas offcanvas-start" tabindex="-1" id="mainMenu" aria-labelledby="mainMenuLabel">
-  <div class="offcanvas-header">
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <nav class="nav flex-column">
-      <a class="nav-link text-primary" href="compare.html">Compare Tool</a>
-    </nav>
-  </div>
-</div>
-
 <div class="container mt-3">
   <div class="row g-4">
     <div class="col-12 col-md-6">
       <div id="panelA" class="viewer-panel card p-3">
         <div class="panel-inner">
-          <select class="form-select objectSelect mb-2" aria-label="Select object (left)">
-            <option value="iphone-17-pro-max" selected>iPhone 17 Pro Max</option>
-          </select>
-          <div class="viewer rounded-3">
-            <div class="Sirv" data-src="https://hunterttp.sirv.com/phones/iphone-17-pro-max/iphone-17-pro-max.spin"></div>
-          </div>
+          <select class="form-select objectSelect mb-2" aria-label="Select object (left)"></select>
+          <div class="viewer rounded-3" id="viewerA"></div>
         </div>
       </div>
     </div>
     <div class="col-12 col-md-6">
       <div id="panelB" class="viewer-panel card p-3">
         <div class="panel-inner">
-          <select class="form-select objectSelect mb-2" aria-label="Select object (right)">
-            <option value="iphone-17-pro-max" selected>iPhone 17 Pro Max</option>
-          </select>
-          <div class="viewer rounded-3">
-            <div class="Sirv" data-src="https://hunterttp.sirv.com/phones/iphone-17-pro-max/iphone-17-pro-max.spin"></div>
-          </div>
+          <select class="form-select objectSelect mb-2" aria-label="Select object (right)"></select>
+          <div class="viewer rounded-3" id="viewerB"></div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="range-wrap">
-    <input id="syncRange" type="range" class="form-range" min="0" max="95" step="1" value="0" aria-label="Rotate both viewers">
+    <input id="syncRange" type="range" class="form-range" min="1" max="240" step="1" value="1" aria-label="Rotate both viewers">
   </div>
 
   <div class="shared-toolbar">
@@ -77,6 +47,49 @@
 </div>
 
 <script src="https://scripts.sirv.com/sirvjs/v3/sirv.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const CONFIG = {
+    objects: [{
+      name: "iPhone 17 Pro Max",
+      slug: "iphone-17-pro-max",
+      url: "https://hunterttp.sirv.com/phones/iphone-17-pro-max/iphone-17-pro-max.spin",
+      reverse: true
+    }]
+  }
+
+  function renderViewer(elId, obj) {
+    const opts = obj.reverse ? ' data-options="column.reverse:true"' : ''
+    document.getElementById(elId).innerHTML =
+      `<div class="Sirv" id="${elId}__sirv"><div data-src="${obj.url}"${opts}></div></div>`
+    Sirv.start(`#${elId}__sirv`)
+  }
+
+  function setupPanel(rootId, initialIndex = 0) {
+    const root = document.getElementById(rootId)
+    const selectEl = root.querySelector('.objectSelect')
+    selectEl.innerHTML = CONFIG.objects.map((o,i)=>`<option value="${i}">${o.name}</option>`).join('')
+    selectEl.value = initialIndex
+    renderViewer(root.querySelector('.viewer').id, CONFIG.objects[initialIndex])
+  }
+
+  setupPanel('panelA', 0)
+  setupPanel('panelB', 0)
+
+  let spinA = null, spinB = null
+
+  Sirv.on('spin:ready', () => {
+    const vA = Sirv.viewer.getInstance('#viewerA__sirv')
+    const vB = Sirv.viewer.getInstance('#viewerB__sirv')
+    if (vA?.child(0)?.spin?.isReady()) spinA = vA.child(0).spin
+    if (vB?.child(0)?.spin?.isReady()) spinB = vB.child(0).spin
+  })
+
+  const slider = document.getElementById('syncRange')
+  slider.addEventListener('input', e => {
+    const col = e.target.value|0   // 1..240
+    if (spinA?.isReady()) spinA.jumpCols(col)
+    if (spinB?.isReady()) spinB.jumpCols(col)
+  })
+</script>
 </body>
 </html>
