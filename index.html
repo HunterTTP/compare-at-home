@@ -8,7 +8,8 @@
   <style>
     .viewer-panel .panel-inner { width: min(420px, 100%); margin: 0 auto; }
     .viewer { width: 100%; aspect-ratio: 1 / 1; margin: 12px auto; }
-    .shared-toolbar { display: flex; justify-content: center; margin-top: 16px; }
+    .shared-toolbar { display: flex; justify-content: center; margin: 16px 0; }
+    .range-wrap { max-width: 720px; margin: 16px auto; }
   </style>
 </head>
 <body>
@@ -36,7 +37,6 @@
 
 <div class="container mt-3">
   <div class="row g-4">
-    <!-- Panel A -->
     <div class="col-12 col-md-6">
       <div id="panelA" class="viewer-panel card p-3">
         <div class="panel-inner">
@@ -45,8 +45,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Panel B -->
     <div class="col-12 col-md-6">
       <div id="panelB" class="viewer-panel card p-3">
         <div class="panel-inner">
@@ -57,7 +55,10 @@
     </div>
   </div>
 
-  <!-- Shared toolbar -->
+  <div class="range-wrap">
+    <input id="syncRange" type="range" class="form-range" min="0" max="95" step="1" value="0" aria-label="Rotate both viewers">
+  </div>
+
   <div class="shared-toolbar">
     <div class="btn-group btn-group-sm" role="group" aria-label="View controls both">
       <button class="btn btn-outline-secondary" data-view="front">Front</button>
@@ -69,16 +70,21 @@
 </div>
 
 <script>
+  const COUNT = 96, PERROW = 12
+  const PRESET_VIEWS = { front: 0, left: 24, back: 48, right: 72 }
+
   const CONFIG = {
     objects: [
-      { name: "iPhone 16 Pro", image: "./sprites/iphone/sprite.webp",
-        views: { front: 0, back: 48, left: 24, right: 72 }, inverted: true },
-      { name: "Samsung Galaxy 25 Ultra", image: "./sprites/android/sprite.webp",
-        views: { front: 0, back: 48, left: 22, right: 70 }, inverted: true }
+      { name: "iPhone 16 Pro", image: "./sprites/iphone/sprite.webp", offset: 1, inverted: true },
+      { name: "Samsung Galaxy 25 Ultra", image: "./sprites/android/sprite.webp", offset: -2, inverted: true }
     ]
   }
 
-  const COUNT = 96, PERROW = 12
+  let baseFrame = 0
+
+  function norm(n) { return ((n % COUNT) + COUNT) % COUNT }
+
+  function frameWithOffset(obj, base) { return norm(base + (obj.offset | 0)) }
 
   function initThreeSixty(container, obj) {
     const size = Math.max(200, Math.round(container.clientWidth || 400))
@@ -91,8 +97,6 @@
       dragTolerance: 3, swipeTolerance: 3,
       inverted: !!obj.inverted
     })
-    inst.goto(obj.views.front)
-    inst.play(true, 1)
     return inst
   }
 
@@ -105,27 +109,45 @@
 
     let current = CONFIG.objects[initialIndex]
     let ts = initThreeSixty(viewerEl, current)
+    ts.play(true, 1)
 
     selectEl.addEventListener('change', () => {
       current = CONFIG.objects[selectEl.value | 0]
       ts.stop(); ts = initThreeSixty(viewerEl, current)
     })
 
-    return { get current(){return current}, set current(v){current=v}, get ts(){return ts}, set ts(v){ts=v}, viewerEl }
+    return {
+      get current(){ return current },
+      set current(v){ current = v },
+      get ts(){ return ts },
+      set ts(v){ ts = v }
+    }
   }
 
-  // Init both panels
   const panelA = setupPanel(document.getElementById('panelA'), 0)
   const panelB = setupPanel(document.getElementById('panelB'), 1)
 
-  // Shared controls
-  document.querySelector('.shared-toolbar .btn-group').addEventListener('click', e => {
-    const v = e.target.dataset.view; if (!v) return
+  const syncRange = document.getElementById('syncRange')
+
+  function applyBaseToBoth(base) {
+    baseFrame = norm(base)
     ;[panelA, panelB].forEach(panel => {
       panel.ts.stop()
-      const idx = panel.current.views[v]
-      if (Number.isInteger(idx)) panel.ts.goto(idx)
+      panel.ts.goto(frameWithOffset(panel.current, baseFrame))
     })
+  }
+
+  syncRange.addEventListener('input', (e) => {
+    applyBaseToBoth(e.target.value | 0)
+  })
+
+  document.querySelector('.shared-toolbar .btn-group').addEventListener('click', e => {
+    const v = e.target?.dataset?.view
+    if (!v) return
+    const canonical = PRESET_VIEWS[v] | 0
+    baseFrame = canonical
+    syncRange.value = baseFrame
+    applyBaseToBoth(baseFrame)
   })
 </script>
 
