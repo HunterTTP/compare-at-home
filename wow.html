@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>360 Panorama</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Pannellum -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+
+  <style>
+    html, body { height: 100%; background: #0b0c0f; }
+    #pano { width: 100%; height: 80vh; background: #000; border-radius: .5rem; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand">360 Panorama Viewer</span>
+      <div class="d-flex gap-2">
+        <button id="btnAuto" class="btn btn-outline-light btn-sm">Autorotate</button>
+        <button id="btnStop" class="btn btn-outline-light btn-sm">Stop</button>
+        <button id="btnCenter" class="btn btn-outline-light btn-sm">Center</button>
+        <button id="btnFs" class="btn btn-outline-light btn-sm">Fullscreen</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-xl-10">
+        <div id="pano" class="shadow"></div>
+        <p class="text-secondary small mt-2">
+          Place <code>pano.jpg</code> (2:1 equirectangular) next to this HTML. Serve via <code>http://</code>, not <code>file://</code>.
+        </p>
+      </div>
+    </div>
+  </main>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const viewer = pannellum.viewer('pano', {
+      type: 'equirectangular',
+      panorama: 'pano.jpg',
+      autoLoad: true
+    });
+
+    // Controls
+    document.getElementById('btnAuto').onclick   = () => viewer.startAutoRotate(-2);
+    document.getElementById('btnStop').onclick   = () => viewer.stopAutoRotate();
+    document.getElementById('btnCenter').onclick = () => { viewer.stopAutoRotate(); viewer.setYaw(0); };
+    document.getElementById('btnFs').onclick     = () => viewer.toggleFullscreen();
+  });
+</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
