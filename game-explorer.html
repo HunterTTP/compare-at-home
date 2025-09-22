@@ -41,11 +41,9 @@
   </head>
   <body>
     <nav
-      class="navbar navbar-dark bg-dark sticky-top border-bottom border-secondary"
+      class="navbar navbar-dark bg-dark sticky-top border-bottom border-secondary position-relative"
     >
-      <div
-        class="container-fluid d-flex justify-content-between align-items-center flex-nowrap py-1"
-      >
+      <div class="container-fluid align-items-center flex-nowrap py-1">
         <button
           class="btn btn-sm text-white"
           type="button"
@@ -56,14 +54,38 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="d-flex gap-2">
-          <button id="btnAuto" class="btn btn-outline-light btn-sm">
-            Stop Rotate
-          </button>
-          <button id="btnReset" class="btn btn-outline-light btn-sm">
-            Reset
-          </button>
+
+        <!-- Geometrically centered, Bootstrap-only -->
+        <div
+          class="position-absolute top-50 start-50 translate-middle pe-none z-3"
+        >
+          <div class="dropdown pe-auto">
+            <button
+              class="btn btn-outline-light btn-sm dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              Select Location
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark">
+              <li>
+                <a class="dropdown-item pano-option" data-scene="wow1" href="#"
+                  >Goldshire - Inside</a
+                >
+              </li>
+              <li>
+                <a class="dropdown-item pano-option" data-scene="wow2" href="#"
+                  >Goldshire - Woods</a
+                >
+              </li>
+            </ul>
+          </div>
         </div>
+
+        <button id="btnReset" class="btn btn-outline-light btn-sm ms-auto">
+          Reset
+        </button>
       </div>
     </nav>
 
@@ -114,13 +136,24 @@
         const maxH = 110;
 
         const viewer = pannellum.viewer("pano", {
-          type: "equirectangular",
-          panorama: "panos/wow-pano.jpg",
-          autoLoad: true,
-          autoRotate: -2,
-          hfov: hfovFor(),
-          minHfov: minH,
-          maxHfov: maxH,
+          default: {
+            firstScene: "wow1",
+            autoLoad: true,
+            autoRotate: -2,
+            hfov: hfovFor(),
+            minHfov: minH,
+            maxHfov: maxH,
+          },
+          scenes: {
+            wow1: {
+              type: "equirectangular",
+              panorama: "panos/wow-pano.jpg",
+            },
+            wow2: {
+              type: "equirectangular",
+              panorama: "panos/wow-pano-2.jpg",
+            },
+          },
         });
 
         const applyResponsiveHfov = () => viewer.setHfov(hfovFor(), false);
@@ -130,25 +163,38 @@
         window.addEventListener("orientationchange", applyResponsiveHfov);
         window.addEventListener("resize", applyResponsiveHfov);
 
-        let autoRotating = true;
-        document.getElementById("btnAuto").onclick = (e) => {
-          if (autoRotating) {
-            viewer.stopAutoRotate();
-            e.target.textContent = "Autorotate";
-          } else {
-            viewer.startAutoRotate(-2);
-            e.target.textContent = "Stop Rotate";
-          }
-          autoRotating = !autoRotating;
+        const dropdownBtn = document.querySelector(
+          ".dropdown .dropdown-toggle"
+        );
+        const setDropdownLabel = (sceneId) => {
+          const item = document.querySelector(
+            `.dropdown-item[data-scene="${sceneId}"]`
+          );
+          dropdownBtn.textContent = item
+            ? item.textContent.trim()
+            : "Select Location";
         };
 
+        setDropdownLabel(viewer.getScene());
+
         document.getElementById("btnReset").onclick = () => {
-          viewer.stopAutoRotate();
-          autoRotating = false;
-          document.getElementById("btnAuto").textContent = "Autorotate";
-          viewer.setYaw(0);
-          viewer.setHfov(hfovFor(), false);
+          viewer.lookAt(0, 0, hfovFor(), false);
+          viewer.startAutoRotate(-2);
+          setDropdownLabel(viewer.getScene());
         };
+
+        let autoRotating = true;
+
+        document.querySelectorAll(".pano-option").forEach((el) => {
+          el.addEventListener("click", (e) => {
+            e.preventDefault();
+            const scene = el.getAttribute("data-scene");
+            viewer.loadScene(scene, null, null, hfovFor(), 0);
+            if (autoRotating) viewer.startAutoRotate(-2);
+            else viewer.stopAutoRotate();
+            setDropdownLabel(scene);
+          });
+        });
       });
     </script>
 
