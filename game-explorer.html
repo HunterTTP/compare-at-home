@@ -162,22 +162,21 @@
 
     <script>
       window.addEventListener("DOMContentLoaded", () => {
+        // Recommended breakpoints
         const breakpoints = {
           phone: window.matchMedia("(max-width: 576px)"),
-          tablet: window.matchMedia(
-            "(min-width: 577px) and (max-width: 992px)"
-          ),
-          desktop: window.matchMedia("(min-width: 993px)"),
+          tablet: window.matchMedia("(min-width: 577px) and (max-width: 992px)"),
+          desktop: window.matchMedia("(min-width: 993px) and (max-width: 1200px)"),
+          largeDesktop: window.matchMedia("(min-width: 1201px)"),
         };
 
         const hfovFor = () => {
-          if (breakpoints.phone.matches) return 50;
+          if (breakpoints.phone.matches) return 55;
           if (breakpoints.tablet.matches) return 70;
-          return 80;
+          return 85;
         };
 
-        const minH = 10,
-          maxH = 110;
+        const minH = 20, maxH = 95;
 
         const viewer = pannellum.viewer("pano", {
           default: {
