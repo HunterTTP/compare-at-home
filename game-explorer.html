@@ -18,6 +18,9 @@
       src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"
     ></script>
 
+    <!-- A-Frame (for VR) -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
     <style>
       html,
       body {
@@ -37,6 +40,19 @@
         height: 100%;
         background: #000;
       }
+
+      /* Minimal VR overlay */
+      #vrOverlay {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        z-index: 1080;
+        display: none;
+      }
+      #vrOverlay a-scene {
+        width: 100%;
+        height: 100%;
+      }
     </style>
   </head>
   <body>
@@ -55,7 +71,7 @@
           <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Geometrically centered, Bootstrap-only -->
+        <!-- Centered dropdown (unchanged) -->
         <div
           class="position-absolute top-50 start-50 translate-middle pe-none z-3"
         >
@@ -83,9 +99,12 @@
           </div>
         </div>
 
-        <button id="btnReset" class="btn btn-outline-light btn-sm ms-auto">
-          Reset
-        </button>
+        <div class="ms-auto d-flex gap-2">
+          <button id="btnReset" class="btn btn-outline-light btn-sm">
+            Reset
+          </button>
+          <button id="btnVR" class="btn btn-primary btn-sm">VR</button>
+        </div>
       </div>
     </nav>
 
@@ -116,6 +135,31 @@
       <div id="pano"></div>
     </main>
 
+    <div id="vrOverlay">
+      <a-scene
+        id="vrScene"
+        renderer="antialias: true"
+        background="color: #000"
+        vr-mode-ui="enabled: true"
+      >
+        <a-assets>
+          <img id="vr-wow1" src="panos/wow-pano.jpg" crossorigin="anonymous" />
+          <img
+            id="vr-wow2"
+            src="panos/wow-pano-2.jpg"
+            crossorigin="anonymous"
+          />
+        </a-assets>
+        <a-entity
+          camera
+          look-controls
+          wasd-controls="enabled:false"
+          position="0 1.6 0"
+        ></a-entity>
+        <a-sky id="vrSky" src="#vr-wow1" rotation="0 -90 0"></a-sky>
+      </a-scene>
+    </div>
+
     <script>
       window.addEventListener("DOMContentLoaded", () => {
         const breakpoints = {
@@ -132,8 +176,8 @@
           return 80;
         };
 
-        const minH = 10;
-        const maxH = 110;
+        const minH = 10,
+          maxH = 110;
 
         const viewer = pannellum.viewer("pano", {
           default: {
@@ -145,14 +189,8 @@
             maxHfov: maxH,
           },
           scenes: {
-            wow1: {
-              type: "equirectangular",
-              panorama: "panos/wow-pano.jpg",
-            },
-            wow2: {
-              type: "equirectangular",
-              panorama: "panos/wow-pano-2.jpg",
-            },
+            wow1: { type: "equirectangular", panorama: "panos/wow-pano.jpg" },
+            wow2: { type: "equirectangular", panorama: "panos/wow-pano-2.jpg" },
           },
         });
 
@@ -174,7 +212,6 @@
             ? item.textContent.trim()
             : "Select Location";
         };
-
         setDropdownLabel(viewer.getScene());
 
         document.getElementById("btnReset").onclick = () => {
@@ -184,7 +221,6 @@
         };
 
         let autoRotating = true;
-
         document.querySelectorAll(".pano-option").forEach((el) => {
           el.addEventListener("click", (e) => {
             e.preventDefault();
@@ -194,6 +230,28 @@
             else viewer.stopAutoRotate();
             setDropdownLabel(scene);
           });
+        });
+
+        const btnVR = document.getElementById("btnVR");
+        const vrOverlay = document.getElementById("vrOverlay");
+        const vrScene = document.getElementById("vrScene");
+        const vrSky = document.getElementById("vrSky");
+
+        const syncSceneToVR = () => {
+          const sceneId = viewer.getScene();
+          vrSky.setAttribute("src", `#vr-${sceneId}`);
+        };
+
+        btnVR.addEventListener("click", () => {
+          syncSceneToVR();
+          vrOverlay.style.display = "block";
+          requestAnimationFrame(() => {
+            if (vrScene.enterVR) vrScene.enterVR();
+          });
+        });
+
+        vrScene.addEventListener("exit-vr", () => {
+          vrOverlay.style.display = "none";
         });
       });
     </script>
